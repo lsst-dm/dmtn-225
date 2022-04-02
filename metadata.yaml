@@ -37,14 +37,18 @@ authors:
 copyright: "2022, Association of Universities for Research in Astronomy, Inc. (AURA)"
 
 # Description. A short, 1-2 sentence statemement used by document indices.
-description: "The Rubin Science Platform will store various metadata about each user, either created by the Science Platform (such as some identifiers) or collected from the relevant identity provider. This document describes the metadata associated with users and its constraints, such as numeric ranges for UIDs and GIDs and valid patterns for usernames and group names."
+description: >-
+  Describes the metadata associated with users of the Rubin Science Platform
+  and the sources and constraints of that metadata.
 
 # Abstract, if available
-# abstract: >
-#           Write your paragraph
-#           here with multiple lines.
-#
-#           You can have multiple paragraphs too.
+abstract: >
+  The Rubin Science Platform will store various metadata about each user,
+  either created by the Science Platform (such as some identifiers) or
+  collected from the relevant identity provider. This document describes the
+  metadata associated with users and its sources and constraints, such as
+  numeric ranges for UIDs and GIDs and valid patterns for usernames and group
+  names.
 
 # URL where this document is published by Read the Docs. e.g. http://sqr-001.lsst.codes
 url: "https://dmtn-225.lsst.io"

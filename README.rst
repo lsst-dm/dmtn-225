@@ -14,7 +14,7 @@ User metadata for the Science Platform
 DMTN-225
 ========
 
-The Rubin Science Platform will store various metadata about each user, either created by the Science Platform (such as some identifiers) or collected from the relevant identity provider. This document describes the metadata associated with users and its constraints, such as numeric ranges for UIDs and GIDs and valid patterns for usernames and group names.
+Describes the metadata associated with users of the Rubin Science Platform and the sources and constraints of that metadata.
 
 **Links:**
 
