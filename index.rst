@@ -13,6 +13,10 @@ While this document is primarily about general users of the Science Platform dep
 User metadata
 =============
 
+This is the user metadata that we are storing so far.
+We expect to add additional metadata, such as whether a user has accepted the Acceptable Use Policy, before the production release.
+This tech note will be updated when we add additional metadata.
+
 Username
 --------
 
@@ -170,3 +174,6 @@ All IDF and CDF deployments will use the same UID and GID assignments so that UI
 We expect to sometimes want to mount the same POSIX file system on multiple deployments.
 
 Once a given UID or GID has been used, it will never be reused for a different user or group.
+
+COmanage does support assigning UIDs and GIDs, but the configuration complexity required is higher, and our assignment needs are a somewhat awkward fit for COmanage's capabilities.
+We therefore will do UID and GID assignment independently of COmanage.
