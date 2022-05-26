@@ -29,11 +29,14 @@ CILogon provides a unique opaque identifier during authentication.
 The user's LDAP record is then retrieved via a search for that identifier, and the username is taken from the ``uid`` field of that LDAP record.
 It is then also stored in Redis as data associated with each authentication token.
 
-**Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``), must not start or end with a dash, and must not contain two consecutive dashes. [#]_
-Must not consist entirely of numbers.
+**Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``).
+Must be at least two characters long.
+Must contain at least one lowercase ASCII letter.
+Must not start or end with a dash
+Must not contain two consecutive dashes. [#]_
 Usernames for bot users (users created for automated processes or services, not for human users) must begin with ``bot-``.
 
-.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*$``
+.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*[a-z](?:[a-z0-9]|-[a-z0-9])*$``
 
 Numeric UID
 ^^^^^^^^^^^
@@ -106,7 +109,9 @@ The user's default group has the same name as the username and the same GID as t
 **Storage**: Group names are stored where user group membership is stored.
 
 **Constraints**: All group names must begin with ``g_``.
-Group names must consist of lowercase ASCII letters and numbers, period (``.``), dash (``-``), and underscore (``_``), and must be at most 32 characters long.
+Group names must consist of lowercase ASCII letters and numbers, period (``.``), dash (``-``), and underscore (``_``), and must be at most 32 characters long. [#]_
+
+.. [#] Regular expression: ``^g_[a-z0-9._-]{1,30}$``
 
 Numeric GID
 ^^^^^^^^^^^
