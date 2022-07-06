@@ -265,6 +265,8 @@ Numeric GID
 
 **Constraints**: Whatever constraints GitHub uses to assign team IDs.
 
+.. _usdf:
+
 USDF
 ====
 
