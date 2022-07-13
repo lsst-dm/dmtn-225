@@ -10,6 +10,16 @@ This document describes the metadata associated with users and its sources and c
 
 This document is divided into three sections, one for the :abbr:`IDF (Interim Data Facility)` and :abbr:`CDF (Cloud Data Facility)`, one for Telescope and Site deployments, and one for the :abbr:`USDF (United States Data Facility)`.
 
+.. note::
+
+   This is part of a tech note series on identity management for the Rubin Science Platform.
+   The primary documents are DMTN-234_, which describes the high-level design; DMTN-224_, which describes the implementation; and SQR-069_, which provides a history and analysis of the decisions underlying the design and implementation.
+   See the `references section of DMTN-224 <https://dmtn-224.lsst.io/#references>`__ for a complete list of related documents.
+
+.. _DMTN-234: https://dmtn-234.lsst.io/
+.. _DMTN-224: https://dmtn-224.lsst.io/
+.. _SQR-069: https://sqr-069.lsst.io/
+
 IDF and CDF
 ===========
 
