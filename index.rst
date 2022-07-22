@@ -35,9 +35,9 @@ Username
 **Source**: User chooses their (unique) username during enrollment.
 
 **Storage**: In COmanage, it is stored as an identifier associated with the user's record.
-CILogon provides a unique opaque identifier during authentication.
-The user's LDAP record is then retrieved via a search for that identifier, and the username is taken from the ``uid`` field of that LDAP record.
-It is then also stored in Redis as data associated with each authentication token.
+COmanage stores it in LDAP as ``voPersonApplicationUID``.
+During authentication, CILogon maps the user's identity to an LDAP record, retrieves the username from that attribute, and stores it in the ``username`` claim of the resulting OpenID Connect ID token.
+Gafaelfawr reads it from there and stores it in the user's token in Redis and its SQL database.
 
 **Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``).
 Must be at least two characters long.
@@ -74,7 +74,8 @@ Insofar as possible, the Rubin Science Platform will only record the user's enti
 COmanage currently does not properly support this, and may represent the name in components, but the Science Platform will attempt to use the combined form only.
 
 **Storage**: The names from each associated federated identity are stored in COmanage, along with any name the user chooses to enter.
-Whatever name they choose as primary is stored as the ``displayName`` attribute in the user's LDAP record as maintained by COmanage, and is retrieved from there by the Science Platform using the token API.
+In COmanage, this is stored as the user's preferred name, and COmanage is configured to write that name to LDAP as the ``displayName`` attribute.
+It is retrieved from there by the Science Platform using the token API.
 
 **Constraints**: Any valid UTF-8 string of reasonable length without control characters.
 No assumptions are made about the structure of the name.
@@ -86,7 +87,8 @@ Email address
 The user may choose to enter a new email address.
 
 **Storage**: The email addresses from each associated federated identity are stored in COmanage, along with any email the user chooses to enter.
-Whatever email address they choose as primary is stored as the ``mail`` attribute in the user's LDAP record as maintained by COmanage, and is retrieved from there by the Science Platform using the token API.
+The user can select which one is preferred, which is the one that will be used by the Science Platform.
+This is stored as the ``mail`` attribute in the user's LDAP record as maintained by COmanage, and is retrieved from there by the Science Platform using the token API.
 
 **Constraints**: Must be a syntactically-valid `RFC 5322 addr-spec <https://datatracker.ietf.org/doc/html/rfc5322#section-3.4.1>`__.
 COmanage will confirm the validity of the email address during enrollment by sending the user an email and having them follow a link in the email.
@@ -98,7 +100,8 @@ Group membership
 Users are added to groups by group owners, and may be added to groups based on automated rules triggering off of their affiliation data.
 Users are also automatically a member of a default group with the same name as the username.
 
-**Storage**: COmanage stores the user's group membership information and provides it in the LDAP server it maintains, as ``member`` attributes in a groups tree.
+**Storage**: COmanage stores the user's group membership information and provides it in the LDAP server it maintains, as ``hasMember`` attributes in a groups tree.
+The groups of which a user is a member are also stored as ``isMemberOf`` attributes in the person record.
 Group membership information is retrieved from LDAP each time it is needed.
 However, be aware that the scopes of an authentication token are calculated from the group membership at the time of initial user authentication and are not affected by subsequent changes to the user's group membership until that token expires.
 
