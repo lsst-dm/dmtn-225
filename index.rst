@@ -65,6 +65,11 @@ As an optimization, since the UID never changes, it is also stored as data assoc
 UIDs are unique and are intended to never be reused.
 Once assigned, the UID for a given account never changes, even if the username is changed.
 
+Primary GID
+^^^^^^^^^^^
+
+**Source**: The user's primary GID will always be the same as their UID.
+
 Full name
 ^^^^^^^^^
 
@@ -98,12 +103,13 @@ Group membership
 
 **Source**: COmanage records the user's group membership (except in their default group).
 Users are added to groups by group owners, and may be added to groups based on automated rules triggering off of their affiliation data.
-Users are also automatically a member of a default group with the same name as the username.
+Users are also automatically a member of a default group with the same name as the username and the same GID as the user's UID.
+This default group is added by the Science Platform and not recorded in COmanage or LDAP.
 
 **Storage**: COmanage stores the user's group membership information and provides it in the LDAP server it maintains, as ``hasMember`` attributes in a groups tree.
 The groups of which a user is a member are also stored as ``isMemberOf`` attributes in the person record.
-Group membership information is retrieved from LDAP each time it is needed.
-However, be aware that the scopes of an authentication token are calculated from the group membership at the time of initial user authentication and are not affected by subsequent changes to the user's group membership until that token expires.
+Group membership information is retrieved from LDAP each time it is needed, with the user's default group added before passing the group information along to other systems.
+Be aware that the scopes of an authentication token are calculated from the group membership at the time of initial user authentication and are not affected by subsequent changes to the user's group membership until that token expires.
 
 **Constraints**: There is no inherent limit in the number of groups a user may be a member of, but be aware that NFS only allows a user to be a member of 16 groups, one of which is the user's default group.
 Group memberships above 16 may be ignored by the NFS server.
@@ -114,8 +120,7 @@ Group metadata
 Group name
 ^^^^^^^^^^
 
-(The below rules only apply to additional groups.
-The user's default group has the same name as the username and the same GID as the user's UID.)
+(The below rules only apply to additional groups, not the default group with the same name as the username.)
 
 **Source**: Groups are named in COmanage when they are created.
 
@@ -223,6 +228,11 @@ For bot users that do not exist in GitHub, we make up a UID when an authenticati
 
 **Constraints**: Whatever constraints are used by GitHub to assign UIDs.
 
+Primary GID
+^^^^^^^^^^^
+
+**Source**: The user's primary GID will always be the same as their UID.
+
 Full name
 ^^^^^^^^^
 
@@ -245,7 +255,11 @@ Email address
 Group membership
 ^^^^^^^^^^^^^^^^
 
-**Source**: Derived from GitHub organization and team memberships.
+**Source**: Derived from GitHub organization and team memberships, with the exception of the user's default group.
+That group will have the same name and GID as the user's username and UID, and is added automatically by the Science Platform.
+
+Note that this is not guaranteed to be safe, since the GitHub user ID and team ID space may overlap and user IDs may therefore conflict with team IDs.
+However, in practice, given the small number of users we expect to use these deployments, it is probably safe enough.
 
 **Storage**: Determined during authentication with GitHub API calls and stored as data associated with each token in Redis.
 
@@ -306,7 +320,16 @@ Numeric UID
 
 **Source**: The ``uidNumber`` attribute of the user's record in LDAP.
 
-**Storage**: Stored as data associated with each token in Redis.
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
+
+**Constraints**: Whatever constraints are used by the local identity management system that populates LDAP.
+
+Primary GID
+^^^^^^^^^^^
+
+**Source**: The ``gidNumber`` attribute of the user's record in LDAP.
+
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
 
 **Constraints**: Whatever constraints are used by the local identity management system that populates LDAP.
 
@@ -332,7 +355,8 @@ Email address
 Group membership
 ^^^^^^^^^^^^^^^^
 
-**Source**: All groups in LDAP for which the user is listed as a member.
+**Source**: All groups in LDAP for which the user is listed as a member, plus the group with a GID matching the primary GID of the user.
+The user's primary group is not included in their group memberships, so instead it is looked up by GID and then added to the group memberships returned by LDAP.
 Unlike the other deployments, the USDF deployment does not put the user in a default group with the same name as their username.
 
 **Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
