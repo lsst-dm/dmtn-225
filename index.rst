@@ -1,14 +1,13 @@
-:tocdepth: 1
+######################################
+User metadata for the Science Platform
+######################################
 
-.. sectnum::
+.. abstract::
 
-Abstract
-========
+   The Rubin Science Platform will store various metadata about each user, either created by the Science Platform (such as some identifiers) or collected from the relevant identity provider.
+   This document describes the metadata associated with users and its sources and constraints, such as numeric ranges for UIDs and GIDs and valid patterns for usernames and group names.
 
-The Rubin Science Platform will store various metadata about each user, either created by the Science Platform (such as some identifiers) or collected from the relevant identity provider.
-This document describes the metadata associated with users and its sources and constraints, such as numeric ranges for UIDs and GIDs and valid patterns for usernames and group names.
-
-This document is divided into three sections, one for the :abbr:`IDF (Interim Data Facility)` and :abbr:`CDF (Cloud Data Facility)`, one for Telescope and Site deployments, and one for the :abbr:`USDF (United States Data Facility)`.
+This document is divided into three sections, one for the :abbr:`IDF (Interim Data Facility)` and :abbr:`USDAC (United States Data Access Center)`, one for Telescope and Site deployments, and one for the :abbr:`USDF (United States Data Facility)`.
 
 .. note::
 
@@ -20,8 +19,8 @@ This document is divided into three sections, one for the :abbr:`IDF (Interim Da
 .. _DMTN-224: https://dmtn-224.lsst.io/
 .. _SQR-069: https://sqr-069.lsst.io/
 
-IDF and CDF
-===========
+IDF and USDAC
+=============
 
 User metadata
 -------------
@@ -52,12 +51,10 @@ Numeric UID
 ^^^^^^^^^^^
 
 **Source**: Assigned by the Science Platform on first use of an account.
-All production and integration IDF and CDF Science Platform deployments share the same UID assignment pool and map the same CILogon identity to the same UID.
-Development deployments may use a different UID assignment pool and therefore not use the same UIDs.
+Each deployment IDF or USDAC deployment of the Science Platform has a separate UID assignment pool to map usernames to UIDs.
 
 **Storage**: One document per user is stored in `Google Firestore`_
 This currently contains only the UID, but in the future may contain other metadata maintained by the Science Platform rather than COmanage and CILogon.
-As an optimization, since the UID never changes, it is also stored as data associated with each authentication token in Redis.
 
 .. _Google Firestore: https://cloud.google.com/firestore
 
@@ -109,7 +106,10 @@ This default group is added by the Science Platform and not recorded in COmanage
 **Storage**: COmanage stores the user's group membership information and provides it in the LDAP server it maintains, as ``hasMember`` attributes in a groups tree.
 The groups of which a user is a member are also stored as ``isMemberOf`` attributes in the person record.
 Group membership information is retrieved from LDAP each time it is needed, with the user's default group added before passing the group information along to other systems.
-Be aware that the scopes of an authentication token are calculated from the group membership at the time of initial user authentication and are not affected by subsequent changes to the user's group membership until that token expires.
+
+.. warning::
+
+   The scopes of an authentication token are calculated from the group membership at the time of initial user authentication and are not affected by subsequent changes to the user's group membership until that token expires.
 
 **Constraints**: There is no inherent limit in the number of groups a user may be a member of, but be aware that NFS only allows a user to be a member of 16 groups, one of which is the user's default group.
 Group memberships above 16 may be ignored by the NFS server.
@@ -135,8 +135,7 @@ Numeric GID
 ^^^^^^^^^^^
 
 **Source**: Assigned by the Science Platform on first use of a group.
-All production and integration IDF and CDF Science Platform deployments share the same GID assignment pool and map the same COmanage group to the same GID.
-Development deployments may use a different UID assignment pool and therefore not use the same UIDs.
+Each deployment IDF or USDAC deployment of the Science Platform has a separate UID assignment pool to map group names to UIDs.
 
 **Storage**: One document per group is stored in `Google Firestore`_
 This currently contains only the GID, but in the future may contain other metadata maintained by the Science Platform rather than COmanage and CILogon.
@@ -188,117 +187,20 @@ UID and GID space is divided into the following ranges:
 1000000-2147483647
     Reserved for future use.
 
-UIDs and GIDs are assigned on first use of a given user or group in any Science Platform deployment that shares the same UID and GID assignment database.
-We expect to sometimes want to mount the same POSIX file system on multiple deployments, so the same UID and GID assignment store will be shared by all production and integration deployments (but possibly not by development deployments).
+UIDs and GIDs are assigned on first use of a given user or group in a Science Platform deployment.
+They are not shared between Science Platform deployments.
 
 Once a given UID or GID has been used, it will never be reused for a different user or group.
 
 COmanage does support assigning UIDs and GIDs, but the configuration complexity required is higher, and our assignment needs are a somewhat awkward fit for COmanage's capabilities.
 We therefore will do UID and GID assignment independently of COmanage.
 
-Telescope and Site
-==================
+Telescope and Site (IPA)
+========================
 
-Currently, Telescope and Site deployments use GitHub for authentication.
-It's possible that the summit deployment will switch to a local identity provider at some point in the future to allow for access while the summit is disconnected from the Internet.
-If this happens, it will likely switch to a model like the :ref:`USDF <usdf>` as described below.
-
-User metadata
--------------
-
-Username
-^^^^^^^^
-
-**Source**: The user's GitHub username converted to all lowercase.
-
-**Storage**: The username is used as a unique key for the user in all identity management systems.
-
-**Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``), must not start or end with a dash, and must not contain two consecutive dashes. [#]_
-Must not consist entirely of numbers.
-
-.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*$``
-
-Numeric UID
-^^^^^^^^^^^
-
-**Source**: UID assigned by GitHub.
-For bot users that do not exist in GitHub, we make up a UID when an authentication token for the bot user is created and hope it doesn't conflict with a meaningful GitHub user.
-
-**Storage**: Stored as data associated with each token in Redis.
-
-**Constraints**: Whatever constraints are used by GitHub to assign UIDs.
-
-Primary GID
-^^^^^^^^^^^
-
-**Source**: The user's primary GID will always be the same as their UID.
-
-Full name
-^^^^^^^^^
-
-**Source**: Taken from the GitHub account metadata.
-
-**Storage**: Stored as data associated with each token in Redis.
-
-**Constraints**: Any valid UTF-8 string of reasonable length without control characters.
-No assumptions are made about the structure of the name.
-
-Email address
-^^^^^^^^^^^^^
-
-**Source**: Taken from the GitHub account metadata.
-
-**Storage**: Stored as data associated with each token in Redis.
-
-**Constraints**: Whatever constraints are used by GitHub when adding email addresses to an account.
-
-Group membership
-^^^^^^^^^^^^^^^^
-
-**Source**: Derived from GitHub organization and team memberships, with the exception of the user's default group.
-That group will have the same name and GID as the user's username and UID, and is added automatically by the Science Platform.
-
-Note that this is not guaranteed to be safe, since the GitHub user ID and team ID space may overlap and user IDs may therefore conflict with team IDs.
-However, in practice, given the small number of users we expect to use these deployments, it is probably safe enough.
-
-**Storage**: Determined during authentication with GitHub API calls and stored as data associated with each token in Redis.
-
-**Constraints**: There is no inherent limit in the number of groups a user may be a member of, but be aware that NFS only allows a user to be a member of 16 groups, one of which is the user's default group.
-Group memberships above 16 may be ignored by the NFS server.
-
-Group metadata
---------------
-
-Group name
-^^^^^^^^^^
-
-(The below rules only apply to additional groups.
-The user's default group has the same name as the username.)
-
-**Source**: Each team that the user is a member of corresponds to one group.
-The name of the group is the lowercase form of the organization, a dash (``-``), and the "slug" of the team as retrieved from the GitHub API.
-If the resulting group name is longer than 32 characters, it is truncated at 25 characters and the first six characters of a hash of the full name will be appended.
-
-**Storage**: Group names are stored where user group membership is stored.
-
-**Constraints**: Group names must consist of lowercase ASCII letters and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter, and must be at most 32 characters long.
-
-Numeric GID
-^^^^^^^^^^^
-
-**Source**: The team ID from GitHub.
-
-**Storage**: Stored as data associated with each token in Redis.
-
-**Constraints**: Whatever constraints GitHub uses to assign team IDs.
-
-.. _usdf:
-
-USDF
-====
-
-This section is still preliminary, since the SLAC USDF is not yet complete.
-Some of the details may change before the facility is operational.
+All Telescope and Site Science Platform instances are being migrated to local IPA as the source of authentication and user metadata.
+Until this migration is complete, some will still use GitHub.
+See :ref:`ts-github` for rules for those instances.
 
 User metadata
 -------------
@@ -306,7 +208,8 @@ User metadata
 Username
 ^^^^^^^^
 
-**Source**: The value of the ``sub`` claim in the ID token returned by the OpenID Connect authentication protocol.
+**Source**: The value of the ``preferred_username`` claim in the ID token returned by the OpenID Connect authentication protocol.
+This will correspond to the user's IPA username.
 
 **Storage**: Stored as data associated with each token in Redis.
 
@@ -355,12 +258,206 @@ Email address
 Group membership
 ^^^^^^^^^^^^^^^^
 
-**Source**: All groups in LDAP for which the user is listed as a member, plus the group with a GID matching the primary GID of the user.
+**Source**: All groups in LDAP for which the user's DN is listed as a member.
+
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
+
+.. warning::
+
+   The scopes of an authentication token are calculated from the group membership at the time of initial user authentication and are not affected by subsequent changes to the user's group membership until that token expires.
+
+**Constraints**: There is no inherent limit in the number of groups a user may be a member of, but be aware that NFS only allows a user to be a member of 16 groups, one of which is the user's default group.
+Group memberships above 16 may be ignored by the NFS server.
+
+Group metadata
+--------------
+
+Group name
+^^^^^^^^^^
+
+**Source**: The ``cn`` attribute of the LDAP record for the group.
+
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
+
+**Constraints**: Group names must consist of ASCII letters (upper- or lowercase) and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter, and must be at most 32 characters long.
+
+Numeric GID
+^^^^^^^^^^^
+
+**Source**: The ``gidNumber`` attribute of the LDAP record for the group.
+
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
+
+**Constraints**: Whatever constraints are used by the local identity management system that populates LDAP.
+
+.. _ts-github:
+
+Telescope and Site (GitHub)
+===========================
+
+Currently, some Telescope and Site deployments use GitHub for authentication.
+These are all expected to switch to IPA in the future.
+
+User metadata
+-------------
+
+Username
+^^^^^^^^
+
+**Source**: The user's GitHub username converted to all lowercase.
+
+**Storage**: The username is used as a unique key for the user in all identity management systems.
+
+**Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``), must not start or end with a dash, and must not contain two consecutive dashes. [#]_
+Must not consist entirely of numbers.
+
+.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*$``
+
+Numeric UID
+^^^^^^^^^^^
+
+**Source**: UID assigned by GitHub.
+For bot users that do not exist in GitHub, we make up a UID when an authentication token for the bot user is created and hope it doesn't conflict with a meaningful GitHub user.
+
+**Storage**: Stored as data associated with each token in Redis.
+
+**Constraints**: Whatever constraints are used by GitHub to assign UIDs.
+
+Primary GID
+^^^^^^^^^^^
+
+**Source**: The user's primary GID will always be the same as their UID.
+
+Full name
+^^^^^^^^^
+
+**Source**: Taken from the GitHub account metadata if it is released to the Science Platform instance.
+If the user does not release their name, no name metadata will be available.
+
+**Storage**: Stored as data associated with each token in Redis.
+
+**Constraints**: Any valid UTF-8 string of reasonable length without control characters.
+No assumptions are made about the structure of the name.
+
+Email address
+^^^^^^^^^^^^^
+
+**Source**: Taken from the GitHub account metadata if it is released to the Science Platform instance.
+If the user does not release their email address, no email address metadata will be available.
+
+**Storage**: Stored as data associated with each token in Redis.
+
+**Constraints**: Whatever constraints are used by GitHub when adding email addresses to an account.
+
+Group membership
+^^^^^^^^^^^^^^^^
+
+**Source**: Derived from GitHub organization and team memberships, with the exception of the user's default group.
+That group will have the same name and GID as the user's username and UID, and is added automatically by the Science Platform.
+
+This is not guaranteed to be safe, since the GitHub user ID and team ID space may overlap and user IDs may therefore conflict with team IDs.
+However, in practice, given the small number of users we expect to use these deployments, it is probably safe enough.
+
+**Storage**: Determined during authentication with GitHub API calls and stored as data associated with each token in Redis.
+
+**Constraints**: There is no inherent limit in the number of groups a user may be a member of, but be aware that NFS only allows a user to be a member of 16 groups, one of which is the user's default group.
+Group memberships above 16 may be ignored by the NFS server.
+
+Group metadata
+--------------
+
+Group name
+^^^^^^^^^^
+
+(The below rules only apply to additional groups.
+The user's default group has the same name as the username.)
+
+**Source**: Each team that the user is a member of corresponds to one group.
+The name of the group is the lowercase form of the organization, a dash (``-``), and the "slug" of the team as retrieved from the GitHub API.
+If the resulting group name is longer than 32 characters, it is truncated at 25 characters and the first six characters of a hash of the full name will be appended.
+
+**Storage**: Group names are stored where user group membership is stored.
+
+**Constraints**: Group names must consist of lowercase ASCII letters and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter, and must be at most 32 characters long.
+
+Numeric GID
+^^^^^^^^^^^
+
+**Source**: The team ID from GitHub.
+
+**Storage**: Stored as data associated with each token in Redis.
+
+**Constraints**: Whatever constraints GitHub uses to assign team IDs.
+
+.. _usdf:
+
+USDF
+====
+
+User metadata
+-------------
+
+Username
+^^^^^^^^
+
+**Source**: The value of the ``name`` claim in the ID token returned by the OpenID Connect authentication protocol.
+
+**Storage**: Stored as data associated with each token in Redis.
+
+**Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``), must not start or end with a dash, and must not contain two consecutive dashes. [#]_
+Must not consist entirely of numbers.
+
+.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*$``
+
+Numeric UID
+^^^^^^^^^^^
+
+**Source**: The ``uidNumber`` attribute of the user's record in LDAP.
+
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
+
+**Constraints**: Whatever constraints are used by the local identity management system that populates LDAP.
+
+Primary GID
+^^^^^^^^^^^
+
+**Source**: The ``gidNumber`` attribute of the user's record in LDAP.
+
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
+
+**Constraints**: Whatever constraints are used by the local identity management system that populates LDAP.
+
+Full name
+^^^^^^^^^
+
+**Source**: The ``gecos`` attribute of the user's record in LDAP.
+
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
+
+**Constraints**: Whatever constraints are used by the local identity management system that populates LDAP.
+No assumptions are made about the structure of the name.
+
+Email address
+^^^^^^^^^^^^^
+
+**Source**: The ``mail`` attribute of the user's record in LDAP.
+
+**Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
+
+**Constraints**: Whatever constraints are used by the local identity management system that populates LDAP.
+
+Group membership
+^^^^^^^^^^^^^^^^
+
+**Source**: All groups in LDAP for which the user is listed as a member (via the ``memberUId`` attribute of the group), plus the group with a GID matching the primary GID of the user.
 The user's primary group is not included in their group memberships, so instead it is looked up by GID and then added to the group memberships returned by LDAP.
 Unlike the other deployments, the USDF deployment does not put the user in a default group with the same name as their username.
 
 **Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
-However, be aware that the scopes of an authentication token are calculated from the group membership at the time of initial user authentication and are not affected by subsequent changes to the user's group membership until that token expires.
+
+.. warning::
+
+   The scopes of an authentication token are calculated from the group membership at the time of initial user authentication and are not affected by subsequent changes to the user's group membership until that token expires.
 
 **Constraints**: There is no inherent limit in the number of groups a user may be a member of, but be aware that NFS only allows a user to be a member of 16 groups, one of which is the user's default group.
 Group memberships above 16 may be ignored by the NFS server.
