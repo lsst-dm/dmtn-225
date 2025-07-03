@@ -216,7 +216,7 @@ This will correspond to the user's IPA username.
 **Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``), must not start or end with a dash, and must not contain two consecutive dashes. [#]_
 Must not consist entirely of numbers.
 
-.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*$``
+.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*[a-z](?:[a-z0-9]|-[a-z0-9])*$``
 
 Numeric UID
 ^^^^^^^^^^^
@@ -279,7 +279,9 @@ Group name
 
 **Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
 
-**Constraints**: Group names must consist of ASCII letters (upper- or lowercase) and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter, and must be at most 32 characters long.
+**Constraints**: Group names must consist of ASCII letters (upper- or lowercase) and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter or number, must contain at least one letter, and must be at most 32 characters long. [#]_
+
+.. [#] Regular expression: ``^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z][a-zA-Z0-9._-]*$``
 
 Numeric GID
 ^^^^^^^^^^^
@@ -311,7 +313,7 @@ Username
 **Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``), must not start or end with a dash, and must not contain two consecutive dashes. [#]_
 Must not consist entirely of numbers.
 
-.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*$``
+.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*[a-z](?:[a-z0-9]|-[a-z0-9])*$``
 
 Numeric UID
 ^^^^^^^^^^^
@@ -378,7 +380,9 @@ If the resulting group name is longer than 32 characters, it is truncated at 25 
 
 **Storage**: Group names are stored where user group membership is stored.
 
-**Constraints**: Group names must consist of lowercase ASCII letters and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter, and must be at most 32 characters long.
+**Constraints**: Group names must consist of lowercase ASCII letters and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter or number, must contain a letter, and must be at most 32 characters long. [#]_
+
+.. [#] Regular expression: ``^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z][a-zA-Z0-9._-]*$``
 
 Numeric GID
 ^^^^^^^^^^^
@@ -407,7 +411,7 @@ Username
 **Constraints**: Must consist solely of lowercase ASCII letters, numbers, and dash (``-``), must not start or end with a dash, and must not contain two consecutive dashes. [#]_
 Must not consist entirely of numbers.
 
-.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*$``
+.. [#] Regular expression: ``^[a-z0-9](?:[a-z0-9]|-[a-z0-9])*[a-z](?:[a-z0-9]|-[a-z0-9])*$``
 
 Numeric UID
 ^^^^^^^^^^^
@@ -472,7 +476,9 @@ Group name
 
 **Storage**: Retrieved from LDAP when needed and not stored locally in the Science Platform.
 
-**Constraints**: Group names must consist of ASCII letters (upper- or lowercase) and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter, and must be at most 32 characters long.
+**Constraints**: Group names must consist of ASCII letters (upper- or lowercase) and numbers, period (``.``), dash (``-``), and underscore (``_``), must begin with a letter or number, must contain a letter, and must be at most 32 characters long. [#]_
+
+.. [#] Regular expression: ``^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z][a-zA-Z0-9._-]*$``
 
 Numeric GID
 ^^^^^^^^^^^
